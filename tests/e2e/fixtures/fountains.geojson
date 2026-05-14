@@ -1,0 +1,55 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [12.4964, 41.9028] },
+      "properties": {
+        "id": "rm-001",
+        "indirizzo": "Via della Conciliazione 5",
+        "comune": "Roma",
+        "stato_funzionamento": "attivo"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [12.4800, 41.8950] },
+      "properties": {
+        "id": "rm-002",
+        "indirizzo": "Piazza del Colosseo 1",
+        "comune": "Roma",
+        "stato_funzionamento": "inattivo"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [12.5100, 41.9100] },
+      "properties": {
+        "id": "rm-003",
+        "indirizzo": "Via Appia Nuova 300",
+        "comune": "Roma",
+        "stato_funzionamento": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [12.4700, 41.9200] },
+      "properties": {
+        "id": "rm-004",
+        "indirizzo": "Lungotevere dei Mellini 12",
+        "comune": "Roma",
+        "stato_funzionamento": "attivo"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [12.5000, 41.8800] },
+      "properties": {
+        "id": "rm-005",
+        "indirizzo": "Via Tuscolana 450",
+        "comune": "Roma",
+        "stato_funzionamento": "attivo"
+      }
+    }
+  ]
+}

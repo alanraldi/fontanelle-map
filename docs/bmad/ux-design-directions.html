@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fontanelle Map — Direções de Design</title>
+<style>
+  :root {
+    --brand: #0ea5e9;
+    --brand-dark: #0284c7;
+    --active: #16a34a;
+    --inactive: #dc2626;
+    --surface: #ffffff;
+    --surface-muted: #f8fafc;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border: #e2e8f0;
+    --slate-100: #f1f5f9;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0f172a;
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  header {
+    background: #0f172a;
+    padding: 32px 24px 24px;
+    text-align: center;
+    border-bottom: 1px solid #1e293b;
+  }
+
+  header h1 {
+    color: #f8fafc;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  header p {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-top: 6px;
+  }
+
+  .direction-label {
+    display: inline-block;
+    margin-top: 12px;
+    background: var(--brand);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 32px;
+    padding: 40px 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: #1e293b;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #334155;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    border-color: var(--brand);
+  }
+
+  .card-header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #334155;
+  }
+
+  .card-header .direction-num {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--brand);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .card-header h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-top: 2px;
+  }
+
+  .card-header p {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  .mockup {
+    padding: 20px;
+    background: #0f172a;
+    display: flex;
+    justify-content: center;
+  }
+
+  .phone {
+    width: 220px;
+    height: 420px;
+    background: var(--surface);
+    border-radius: 28px;
+    overflow: hidden;
+    position: relative;
+    border: 6px solid #334155;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+  }
+
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Map background simulation */
+  .map-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(rgba(241,245,249,0.9), rgba(241,245,249,0.9)),
+      repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(203,213,225,0.4) 30px, rgba(203,213,225,0.4) 31px),
+      repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(203,213,225,0.4) 30px, rgba(203,213,225,0.4) 31px);
+  }
+
+  .map-road-h {
+    position: absolute;
+    height: 6px;
+    background: #e2e8f0;
+    left: 0; right: 0;
+  }
+
+  .map-road-v {
+    position: absolute;
+    width: 6px;
+    background: #e2e8f0;
+    top: 0; bottom: 0;
+  }
+
+  /* Markers */
+  .marker {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  .marker.active { background: var(--active); }
+  .marker.inactive { background: var(--inactive); }
+  .marker.primary { background: var(--brand); width: 22px; height: 22px; z-index: 10; }
+  .marker.selected {
+    background: var(--brand);
+    box-shadow: 0 0 0 4px rgba(14,165,233,0.3);
+  }
+
+  .user-dot {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: var(--brand);
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 6px rgba(14,165,233,0.2), 0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  /* Bottom sheet */
+  .bottom-sheet {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    border-radius: 16px 16px 0 0;
+    padding: 12px 14px 16px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+  }
+
+  .sheet-handle {
+    width: 32px;
+    height: 3px;
+    background: #cbd5e1;
+    border-radius: 99px;
+    margin: 0 auto 10px;
+  }
+
+  .distance-badge {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--brand);
+    line-height: 1;
+  }
+
+  .distance-badge span {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .source-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-top: 5px;
+  }
+
+  .status-pill.active { background: #dcfce7; color: var(--active); }
+  .status-pill.inactive { background: #fee2e2; color: var(--inactive); }
+
+  .sheet-list {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sheet-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: var(--surface-muted);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .item-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .item-dot.active { background: var(--active); }
+  .item-dot.inactive { background: var(--inactive); }
+
+  .item-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .item-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .item-dist {
+    font-size: 10px;
+    color: var(--brand);
+    font-weight: 600;
+  }
+
+  /* Top bar */
+  .top-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 20;
+  }
+
+  .top-bar.glass {
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(226,232,240,0.8);
+  }
+
+  .top-bar.solid {
+    background: white;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .filter-chip {
+    background: var(--brand);
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+
+  .filter-chip.outline {
+    background: white;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+
+  .search-bar {
+    flex: 1;
+    background: var(--slate-100);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+
+  .icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  /* Sidebar direction */
+  .split-view {
+    display: flex;
+    height: 100%;
+  }
+
+  .sidebar-panel {
+    width: 80px;
+    background: white;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 10px 8px;
+    gap: 6px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .sidebar-item {
+    padding: 6px 8px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .sidebar-item.selected {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+  }
+
+  .sidebar-item-dist {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brand);
+  }
+
+  .sidebar-item-name {
+    font-size: 9px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .map-area {
+    flex: 1;
+    background: var(--surface-muted);
+    position: relative;
+  }
+
+  /* Dark card direction */
+  .bottom-sheet.dark {
+    background: #0f172a;
+    border-top: 1px solid #1e293b;
+  }
+
+  .bottom-sheet.dark .source-name { color: #f1f5f9; }
+  .bottom-sheet.dark .distance-badge { color: #38bdf8; }
+  .bottom-sheet.dark .distance-badge span { color: #64748b; }
+  .bottom-sheet.dark .sheet-handle { background: #334155; }
+  .bottom-sheet.dark .sheet-item { background: #1e293b; border-color: #334155; }
+  .bottom-sheet.dark .item-name { color: #e2e8f0; }
+
+  /* Cluster bubble */
+  .cluster {
+    position: absolute;
+    background: var(--brand);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  /* FAB */
+  .fab {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    border: 1px solid var(--border);
+  }
+
+  /* Carousel navigation */
+  .chip-scroll {
+    display: flex;
+    gap: 5px;
+    overflow: hidden;
+    padding: 0 2px;
+  }
+
+  /* Card props */
+  .card-props {
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .prop-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .prop-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 80px;
+    padding-top: 1px;
+  }
+
+  .prop-value {
+    font-size: 12px;
+    color: #e2e8f0;
+    flex: 1;
+    line-height: 1.4;
+  }
+
+  .prop-value .tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-right: 4px;
+    margin-bottom: 2px;
+  }
+
+  .tag.good { background: rgba(22,163,74,0.2); color: #4ade80; }
+  .tag.warn { background: rgba(234,179,8,0.2); color: #fbbf24; }
+  .tag.info { background: rgba(14,165,233,0.2); color: #38bdf8; }
+
+  /* Selection overlay */
+  .selected-direction {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .selected-direction.show { display: flex; }
+
+  .selected-box {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    border: 1px solid var(--brand);
+  }
+
+  .selected-box h3 { color: #f1f5f9; font-size: 18px; margin-bottom: 8px; }
+  .selected-box p { color: #94a3b8; font-size: 13px; line-height: 1.5; }
+  .selected-box button {
+    margin-top: 16px;
+    background: var(--brand);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .winner-badge {
+    display: none;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--brand);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .card.chosen .winner-badge { display: block; }
+  .card.chosen { border-color: var(--brand); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fontanelle Map — Direções de Design</h1>
+  <p>6 abordagens visuais para explorar. Clique em uma direção para selecioná-la.</p>
+  <span class="direction-label">Step 9 — Exploração Visual</span>
+</header>
+
+<div class="grid">
+
+  <!-- DIREÇÃO 1: Map Immersive -->
+  <div class="card" onclick="select(1, 'Map Immersive — Mapa Dominante', 'UI mínima sobreposta ao mapa. Zero distrações — o mapa é a interface. Header flutuante com filtro; bottom sheet com preview compacto da fonte mais próxima. A escolha mais pura para o Caminhante.')">
+    <div class="winner-badge">✓ Selecionada</div>
+    <div class="card-header">
+      <div class="direction-num">Direção 1</div>
+      <h2>Map Immersive</h2>
+      <p>Mapa ocupa 100% — UI sobreposta. Zero fricção visual. Foco absoluto no contexto geográfico.</p>
+    </div>
+    <div class="mockup">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="map-bg"></div>
+          <div class="map-road-h" style="top:35%"></div>
+          <div class="map-road-h" style="top:62%"></div>
+          <div class="map-road-v" style="left:30%"></div>
+          <div class="map-road-v" style="left:65%"></div>
+
+          <!-- Top bar glass -->
+          <div class="top-bar glass">
+            <div class="icon-btn">📍</div>
+            <div class="search-bar">Roma, Trastevere</div>
+            <div class="icon-btn">◎</div>
+          </div>
+
+          <!-- Markers -->
+          <div class="marker active" style="top:28%;left:38%;transform:rotate(-45deg)"></div>
+          <div class="marker active" style="top:52%;left:55%;transform:rotate(-45deg)"></div>
+          <div class="marker inactive" style="top:44%;left:25%;transform:rotate(-45deg)"></div>
+          <div class="marker selected" style="top:42%;left:58%;transform:rotate(-45deg)"></div>
+          <div class="cluster" style="top:18%;right:20%">5</div>
+
+          <!-- User dot -->
+          <div class="user-dot" style="top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+
+          <!-- FAB -->
+          <div class="fab" style="bottom:130px;right:12px">⊕</div>
+
+          <!-- Bottom sheet preview -->
+          <div class="bottom-sheet" style="padding-bottom:12px">
+            <div class="sheet-handle"></div>
+            <div class="distance-badge">180 <span>metros</span></div>
+            <div class="source-name">Via della Scala, 12</div>
+            <div class="status-pill active">✓ Ativa</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-props">
+      <div class="prop-row">
+        <span class="prop-label">Pontos fortes</span>
+        <span class="prop-value"><span class="tag good">Imersivo</span><span class="tag good">Contexto espacial</span><span class="tag good">Mobile-first</span></span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Atenção</span>
+        <span class="prop-value"><span class="tag warn">Mapa pode parecer "vazio" sem interação</span></span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Melhor para</span>
+        <span class="prop-value">Caminhante (Marco) — urgência alta, contexto geográfico crítico</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIREÇÃO 2: List + Map Split -->
+  <div class="card" onclick="select(2, 'List + Map Split', 'Lista de fontes à esquerda, mapa à direita. Ideal para o Explorador Regional em desktop. Em mobile, abas alternam entre lista e mapa. A fonte selecionada na lista destaca no mapa e vice-versa.')">
+    <div class="winner-badge">✓ Selecionada</div>
+    <div class="card-header">
+      <div class="direction-num">Direção 2</div>
+      <h2>List + Map Split</h2>
+      <p>Lista de fontes ordenada por distância à esquerda, mapa à direita. Máxima informação simultaneamente.</p>
+    </div>
+    <div class="mockup">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="top-bar solid" style="padding:8px 10px">
+            <span style="font-size:13px;font-weight:700;color:var(--brand)">🗺️</span>
+            <div class="search-bar" style="font-size:10px">Filtrar cidade...</div>
+          </div>
+          <div class="split-view" style="margin-top:44px;height:calc(100% - 44px)">
+            <div class="sidebar-panel">
+              <div style="font-size:8px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;padding:0 2px">Próximas</div>
+              <div class="sidebar-item selected">
+                <div class="sidebar-item-dist">180m</div>
+                <div class="sidebar-item-name">Via della Scala</div>
+                <div style="width:6px;height:6px;background:var(--active);border-radius:50%;margin-top:2px"></div>
+              </div>
+              <div class="sidebar-item">
+                <div class="sidebar-item-dist">340m</div>
+                <div class="sidebar-item-name">P.za Santa Maria</div>
+                <div style="width:6px;height:6px;background:var(--active);border-radius:50%;margin-top:2px"></div>
+              </div>
+              <div class="sidebar-item">
+                <div class="sidebar-item-dist">510m</div>
+                <div class="sidebar-item-name">Via Garibaldi</div>
+                <div style="width:6px;height:6px;background:var(--inactive);border-radius:50%;margin-top:2px"></div>
+              </div>
+              <div class="sidebar-item">
+                <div class="sidebar-item-dist">720m</div>
+                <div class="sidebar-item-name">Largo dei Libri</div>
+                <div style="width:6px;height:6px;background:var(--active);border-radius:50%;margin-top:2px"></div>
+              </div>
+            </div>
+            <div class="map-area">
+              <div class="map-bg"></div>
+              <div class="map-road-h" style="top:40%"></div>
+              <div class="map-road-v" style="left:45%"></div>
+              <div class="marker active" style="top:30%;left:20%;transform:rotate(-45deg)"></div>
+              <div class="marker active" style="top:55%;left:60%;transform:rotate(-45deg)"></div>
+              <div class="marker selected" style="top:38%;left:38%;transform:rotate(-45deg)"></div>
+              <div class="user-dot" style="top:48%;left:45%;transform:translate(-50%,-50%)"></div>
+              <div class="fab" style="bottom:12px;right:8px;width:28px;height:28px;font-size:12px">◎</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-props">
+      <div class="prop-row">
+        <span class="prop-label">Pontos fortes</span>
+        <span class="prop-value"><span class="tag good">Comparar fontes</span><span class="tag good">Desktop ideal</span><span class="tag good">Contexto + lista</span></span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Atenção</span>
+        <span class="prop-value"><span class="tag warn">Sidebar estreita em mobile</span></span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Melhor para</span>
+        <span class="prop-value">Explorador Regional (Léa) — planejamento antecipado, desktop</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIREÇÃO 3: Card Carousel -->
+  <div class="card" onclick="select(3, 'Card Carousel', 'Mapa dominante com carrossel horizontal de cards no rodapé. Deslizar os cards reposiciona o mapa na fonte correspondente. Padrão familiar de apps como Airbnb e Booking. Elegante e intuitivo.')">
+    <div class="winner-badge">✓ Selecionada</div>
+    <div class="card-header">
+      <div class="direction-num">Direção 3</div>
+      <h2>Card Carousel</h2>
+      <p>Mapa dominante com carrossel de cards na base. Deslizar cards move o mapa para a fonte correspondente.</p>
+    </div>
+    <div class="mockup">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="map-bg"></div>
+          <div class="map-road-h" style="top:35%"></div>
+          <div class="map-road-h" style="top:60%"></div>
+          <div class="map-road-v" style="left:35%"></div>
+          <div class="map-road-v" style="left:68%"></div>
+
+          <!-- Top chips -->
+          <div class="top-bar glass" style="padding:8px 10px;gap:5px">
+            <div class="chip-scroll">
+              <div class="filter-chip">Todas</div>
+              <div class="filter-chip outline">Roma</div>
+              <div class="filter-chip outline">Milão</div>
+              <div class="filter-chip outline">Firenze</div>
+            </div>
+            <div class="icon-btn" style="flex-shrink:0">◎</div>
+          </div>
+
+          <div class="marker active" style="top:30%;left:42%;transform:rotate(-45deg)"></div>
+          <div class="marker active" style="top:50%;left:60%;transform:rotate(-45deg)"></div>
+          <div class="marker inactive" style="top:44%;left:28%;transform:rotate(-45deg)"></div>
+          <div class="marker selected" style="top:38%;left:55%;transform:rotate(-45deg);z-index:5"></div>
+          <div class="user-dot" style="top:48%;left:50%;transform:translate(-50%,-50%)"></div>
+
+          <!-- Card carousel -->
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:10px 10px 14px">
+            <div style="display:flex;gap:8px;overflow:hidden">
+              <!-- Active card -->
+              <div style="min-width:150px;background:white;border-radius:12px;padding:10px;box-shadow:0 4px 16px rgba(0,0,0,0.15);border:2px solid var(--brand)">
+                <div style="font-size:20px;font-weight:700;color:var(--brand)">180<span style="font-size:11px;font-weight:500;color:var(--text-secondary)">m</span></div>
+                <div style="font-size:11px;font-weight:600;color:var(--text-primary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Via della Scala, 12</div>
+                <div class="status-pill active" style="margin-top:4px">✓ Ativa</div>
+              </div>
+              <!-- Next card -->
+              <div style="min-width:130px;background:rgba(255,255,255,0.7);border-radius:12px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+                <div style="font-size:16px;font-weight:700;color:var(--text-secondary)">340<span style="font-size:10px;font-weight:500">m</span></div>
+                <div style="font-size:10px;font-weight:600;color:var(--text-secondary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">P.za Santa Maria</div>
+                <div class="status-pill active" style="margin-top:4px">✓ Ativa</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-props">
+      <div class="prop-row">
+        <span class="prop-label">Pontos fortes</span>
+        <span class="prop-value"><span class="tag good">Interação fluida</span><span class="tag good">Padrão conhecido</span><span class="tag good">Mapa visível</span></span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Atenção</span>
+        <span class="prop-value"><span class="tag warn">Cards cobrem parte do mapa</span></span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Melhor para</span>
+        <span class="prop-value">Cidadão Recorrente (Giulia) — familiaridade com apps de mapa</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIREÇÃO 4: Dark Mode Outdoor -->
+  <div class="card" onclick="select(4, 'Dark Mode Outdoor', 'Interface escura que reduz o brilho em ambientes externos noturnos. Mapa com tiles escuros, cards em dark slate, cores de status mais vibrantes. Opção premium para uso noturno.')">
+    <div class="winner-badge">✓ Selecionada</div>
+    <div class="card-header">
+      <div class="direction-num">Direção 4</div>
+      <h2>Dark Mode Outdoor</h2>
+      <p>Interface escura — reduz o brilho em uso noturno. Cores de status mais vibrantes contra o fundo escuro.</p>
+    </div>
+    <div class="mockup">
+      <div class="phone">
+        <div class="phone-screen" style="background:#0f172a">
+          <!-- Dark map simulation -->
+          <div style="position:absolute;inset:0;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%);opacity:0.95"></div>
+          <div style="position:absolute;inset:0">
+            <div style="position:absolute;top:35%;left:0;right:0;height:5px;background:#1e293b;opacity:0.8"></div>
+            <div style="position:absolute;top:62%;left:0;right:0;height:5px;background:#1e293b;opacity:0.8"></div>
+            <div style="position:absolute;top:0;bottom:0;left:30%;width:5px;background:#1e293b;opacity:0.8"></div>
+            <div style="position:absolute;top:0;bottom:0;left:65%;width:5px;background:#1e293b;opacity:0.8"></div>
+          </div>
+
+          <!-- Top bar dark -->
+          <div class="top-bar" style="background:rgba(15,23,42,0.95);border-bottom:1px solid #1e293b;padding:9px 12px">
+            <div style="width:30px;height:30px;border-radius:50%;background:#1e293b;border:1px solid #334155;display:flex;align-items:center;justify-content:center;font-size:13px">📍</div>
+            <div style="flex:1;background:#1e293b;border-radius:8px;padding:5px 10px;font-size:11px;color:#64748b;border:1px solid #334155">Roma, Trastevere</div>
+            <div style="width:30px;height:30px;border-radius:50%;background:#1e293b;border:1px solid #334155;display:flex;align-items:center;justify-content:center;font-size:13px">◎</div>
+          </div>
+
+          <div class="marker" style="top:28%;left:38%;transform:rotate(-45deg);background:#22c55e;border-color:#166534"></div>
+          <div class="marker" style="top:52%;left:55%;transform:rotate(-45deg);background:#22c55e;border-color:#166534"></div>
+          <div class="marker" style="top:44%;left:25%;transform:rotate(-45deg);background:#ef4444;border-color:#7f1d1d"></div>
+          <div class="marker" style="top:42%;left:58%;transform:rotate(-45deg);background:#38bdf8;border-color:#0369a1;box-shadow:0 0 0 4px rgba(56,189,248,0.25)"></div>
+          <div class="user-dot" style="top:50%;left:50%;transform:translate(-50%,-50%);background:#38bdf8;box-shadow:0 0 0 6px rgba(56,189,248,0.15)"></div>
+
+          <!-- Dark bottom sheet -->
+          <div class="bottom-sheet dark">
+            <div class="sheet-handle"></div>
+            <div style="font-size:22px;font-weight:700;color:#38bdf8;line-height:1">180 <span style="font-size:13px;font-weight:500;color:#64748b">metros</span></div>
+            <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-top:3px">Via della Scala, 12</div>
+            <div style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;margin-top:5px;background:rgba(34,197,94,0.15);color:#4ade80">✓ Ativa</div>
+            <div class="sheet-list">
+              <div class="sheet-item" style="background:#1e293b;border-color:#334155">
+                <div class="item-dot" style="background:#22c55e"></div>
+                <div class="item-text">
+                  <div style="font-size:11px;font-weight:600;color:#e2e8f0">P.za Santa Maria</div>
+                  <div style="font-size:10px;color:#38bdf8;font-weight:600">340m</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-props">
+      <div class="prop-row">
+        <span class="prop-label">Pontos fortes</span>
+        <span class="prop-value"><span class="tag good">Uso noturno</span><span class="tag good">Bateria OLED</span><span class="tag good">Premium</span></span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Atenção</span>
+        <span class="prop-value"><span class="tag warn">Fora do escopo v1</span><span class="tag info">Fase 2</span></span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Melhor para</span>
+        <span class="prop-value">Uso noturno — corridas e caminhadas depois do pôr do sol</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIREÇÃO 5: Filter-First -->
+  <div class="card" onclick="select(5, 'Filter-First', 'Filtro de cidade/bairro proeminente no topo antes de qualquer mapa. Para usuários sem GPS ou planejando viagem. O mapa carrega após a seleção inicial. Mais adequado para o Explorador Regional.')">
+    <div class="winner-badge">✓ Selecionada</div>
+    <div class="card-header">
+      <div class="direction-num">Direção 5</div>
+      <h2>Filter-First</h2>
+      <p>Filtro proeminente no topo. Chips de cidade visíveis imediatamente. Favorece o Explorador Regional e fallback sem GPS.</p>
+    </div>
+    <div class="mockup">
+      <div class="phone">
+        <div class="phone-screen">
+          <!-- Filter header -->
+          <div style="background:white;padding:10px 12px 8px;border-bottom:1px solid var(--border)">
+            <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:6px">🌊 Fontanelle Map</div>
+            <div style="display:flex;gap:5px;overflow:hidden;flex-wrap:nowrap">
+              <div style="background:var(--brand);color:white;font-size:9px;font-weight:600;padding:4px 9px;border-radius:99px;white-space:nowrap">Todas</div>
+              <div style="background:#f1f5f9;color:var(--text-secondary);font-size:9px;font-weight:600;padding:4px 9px;border-radius:99px;white-space:nowrap;border:1px solid var(--border)">Roma</div>
+              <div style="background:#f1f5f9;color:var(--text-secondary);font-size:9px;font-weight:600;padding:4px 9px;border-radius:99px;white-space:nowrap;border:1px solid var(--border)">Milão</div>
+              <div style="background:#f1f5f9;color:var(--text-secondary);font-size:9px;font-weight:600;padding:4px 9px;border-radius:99px;white-space:nowrap;border:1px solid var(--border)">+ 8</div>
+            </div>
+          </div>
+
+          <!-- Map area -->
+          <div style="position:relative;height:200px">
+            <div class="map-bg"></div>
+            <div class="map-road-h" style="top:40%;height:6px"></div>
+            <div class="map-road-v" style="left:42%;width:6px"></div>
+            <div class="marker active" style="top:25%;left:35%;transform:rotate(-45deg)"></div>
+            <div class="marker active" style="top:45%;left:58%;transform:rotate(-45deg)"></div>
+            <div class="marker inactive" style="top:58%;left:28%;transform:rotate(-45deg)"></div>
+            <div class="cluster" style="top:15%;right:18%;width:24px;height:24px;font-size:10px">4</div>
+            <div class="user-dot" style="top:46%;left:44%;transform:translate(-50%,-50%)"></div>
+            <div class="fab" style="bottom:8px;right:8px;width:28px;height:28px;font-size:11px">◎</div>
+          </div>
+
+          <!-- Sorted list -->
+          <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;overflow:hidden">
+            <div style="font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">Mais próximas</div>
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-muted);border-radius:8px;border:1px solid var(--brand);box-shadow:0 0 0 1px rgba(14,165,233,0.1)">
+              <div style="font-size:14px;font-weight:700;color:var(--brand);min-width:36px">180m</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:11px;font-weight:600;color:var(--text-primary)">Via della Scala, 12</div>
+                <div style="font-size:10px;color:var(--active);font-weight:500">✓ Ativa</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface-muted);border-radius:8px;border:1px solid var(--border)">
+              <div style="font-size:13px;font-weight:600;color:var(--text-secondary);min-width:36px">340m</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:10px;font-weight:600;color:var(--text-primary)">P.za Santa Maria</div>
+                <div style="font-size:9px;color:var(--active);font-weight:500">✓ Ativa</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-props">
+      <div class="prop-row">
+        <span class="prop-label">Pontos fortes</span>
+        <span class="prop-value"><span class="tag good">Filtro visível</span><span class="tag good">Lista + mapa</span><span class="tag good">Sem GPS ok</span></span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Atenção</span>
+        <span class="prop-value"><span class="tag warn">Mapa menor — contexto reduzido</span></span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Melhor para</span>
+        <span class="prop-value">Sara (sem GPS) e Léa (exploração por cidade)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIREÇÃO 6: Minimal + Airy -->
+  <div class="card" onclick="select(6, 'Minimal + Airy', 'Mapa limpo com muito espaço em branco. Cards com tipografia grande e breathing room generoso. Menos fontes visíveis ao mesmo tempo, mais clareza por fonte. Aposta na elegância sobre a densidade.')">
+    <div class="winner-badge">✓ Selecionada</div>
+    <div class="card-header">
+      <div class="direction-num">Direção 6</div>
+      <h2>Minimal + Airy</h2>
+      <p>Tipografia grande, muito espaço em branco. Menos informação por tela, mais clareza. Aposta na elegância.</p>
+    </div>
+    <div class="mockup">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="map-bg"></div>
+          <div class="map-road-h" style="top:40%"></div>
+          <div class="map-road-v" style="left:50%"></div>
+
+          <!-- Minimal top bar -->
+          <div style="position:absolute;top:12px;left:12px;right:12px;z-index:20">
+            <div style="background:white;border-radius:99px;padding:8px 14px;display:flex;align-items:center;gap:8px;box-shadow:0 2px 12px rgba(0,0,0,0.12);border:1px solid var(--border)">
+              <span style="font-size:14px">🌊</span>
+              <span style="font-size:12px;color:var(--text-secondary);flex:1">Roma, Trastevere</span>
+              <span style="font-size:12px">⌄</span>
+            </div>
+          </div>
+
+          <div class="marker active" style="top:30%;left:35%;transform:rotate(-45deg)"></div>
+          <div class="marker active" style="top:52%;left:62%;transform:rotate(-45deg)"></div>
+          <div class="user-dot" style="top:48%;left:50%;transform:translate(-50%,-50%)"></div>
+
+          <!-- Airy bottom card -->
+          <div style="position:absolute;bottom:0;left:0;right:0;background:white;border-radius:24px 24px 0 0;padding:16px 18px 20px;box-shadow:0 -8px 32px rgba(0,0,0,0.1)">
+            <div style="width:40px;height:4px;background:#e2e8f0;border-radius:99px;margin:0 auto 16px"></div>
+            <div style="font-size:32px;font-weight:800;color:var(--brand);line-height:1">180<span style="font-size:16px;font-weight:500;color:var(--text-secondary)"> m</span></div>
+            <div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-top:6px;line-height:1.3">Via della Scala, 12<br><span style="font-size:12px;font-weight:400;color:var(--text-secondary)">Trastevere, Roma</span></div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <div style="flex:1;background:#dcfce7;color:var(--active);border-radius:10px;padding:10px;text-align:center;font-size:11px;font-weight:600">✓ Ativa</div>
+              <div style="flex:1;background:var(--brand);color:white;border-radius:10px;padding:10px;text-align:center;font-size:11px;font-weight:600">Navegar →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-props">
+      <div class="prop-row">
+        <span class="prop-label">Pontos fortes</span>
+        <span class="prop-value"><span class="tag good">Elegante</span><span class="tag good">Tipografia legível</span><span class="tag good">Clareza</span></span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Atenção</span>
+        <span class="prop-value"><span class="tag warn">Menos fontes visíveis simultaneamente</span></span>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Melhor para</span>
+        <span class="prop-value">Usuário recorrente — foco no resultado, sem distrações</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Selection overlay -->
+<div class="selected-direction" id="overlay">
+  <div class="selected-box">
+    <h3 id="overlay-title">Direção Selecionada</h3>
+    <p id="overlay-desc">Descrição da direção selecionada.</p>
+    <button onclick="closeOverlay()">Fechar</button>
+  </div>
+</div>
+
+<script>
+  let chosen = null;
+
+  function select(num, name, desc) {
+    // Remove previous choice
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('chosen'));
+
+    // Mark chosen
+    const cards = document.querySelectorAll('.card');
+    cards[num - 1].classList.add('chosen');
+    chosen = { num, name, desc };
+
+    // Show overlay
+    document.getElementById('overlay-title').textContent = 'Direção ' + num + ' — ' + name;
+    document.getElementById('overlay-desc').textContent = desc;
+    document.getElementById('overlay').classList.add('show');
+  }
+
+  function closeOverlay() {
+    document.getElementById('overlay').classList.remove('show');
+  }
+
+  document.getElementById('overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeOverlay();
+  });
+</script>
+
+</body>
+</html>

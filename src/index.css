@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #0ea5e9;
+  --color-status-active: #16a34a;
+  --color-status-inactive: #dc2626;
+  --color-status-unknown: #94a3b8;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-border: #e2e8f0;
+
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Focus ring consistent */
+:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+}
+
+/* Scrollbar hidden on filter chips */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Leaflet overrides */
+.leaflet-container {
+  font-family: var(--font-sans);
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+}
+
+/* Fountain markers — CSS classes instead of inline style injection */
+.fm-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.fm-marker span {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.fm-marker--active span   { background-color: #16a34a; }
+.fm-marker--inactive span { background-color: #dc2626; }
+.fm-marker--unknown span  { background-color: #94a3b8; }
+
+/* User location marker */
+.fm-user-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.fm-user-marker span {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #0ea5e9;
+  border: 3px solid white;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3), 0 1px 4px rgba(0, 0, 0, 0.3);
+}
