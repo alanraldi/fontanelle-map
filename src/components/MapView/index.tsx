@@ -132,9 +132,9 @@ export function MapView({
   fountains,
   selectedFountain,
   onFountainSelect,
-  loadingState,
-  error,
-  onRetry,
+  loadingState: _loadingState,
+  error: _error,
+  onRetry: _onRetry,
   onBoundsChange,
   mapRef,
 }: MapViewProps) {

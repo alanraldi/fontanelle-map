@@ -19,15 +19,23 @@ export function Header({ fountainCount }: HeaderProps) {
       className="absolute top-0 left-0 right-0 z-[999] flex items-center justify-between px-4 py-3 pointer-events-none"
       aria-label="Intestazione mappa"
     >
-      <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-sm pointer-events-auto">
-        <Droplets size={20} className="text-sky-500" aria-hidden="true" />
-        <span className="font-semibold text-slate-900 text-sm">Fontanelle Map</span>
-        {fountainCount > 0 && (
-          <span className="flex items-center gap-1 text-xs text-slate-500">
-            <MapPin size={11} aria-hidden="true" />
-            {fountainCount}
-          </span>
-        )}
+      <div className="flex flex-col gap-0.5">
+        <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-sm pointer-events-auto">
+          <Droplets size={20} className="text-sky-500" aria-hidden="true" />
+          <span className="font-semibold text-slate-900 text-sm">Fontanelle Map</span>
+          {fountainCount > 0 && (
+            <span className="flex items-center gap-1 text-xs text-slate-500">
+              <MapPin size={11} aria-hidden="true" />
+              {fountainCount}
+            </span>
+          )}
+        </div>
+        <a
+          href="mailto:alanraldi@gmail.com"
+          className="pointer-events-auto text-xs text-slate-500 hover:text-sky-600 transition-colors px-1"
+        >
+          by Raldi
+        </a>
       </div>
 
       <div className="flex flex-col items-end gap-1">
