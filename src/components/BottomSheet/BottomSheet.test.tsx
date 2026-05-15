@@ -41,23 +41,23 @@ describe('BottomSheet', () => {
     expect(screen.getByRole('region', { name: /dettagli/i })).toBeInTheDocument()
   })
 
-  it('toggle button has correct aria-expanded initially (false)', () => {
+  it('toggle button has correct aria-expanded initially (true)', () => {
     render(
       <BottomSheet selectedFountain={null} onClose={vi.fn()}>
         <div />
       </BottomSheet>,
     )
-    expect(screen.getByRole('button', { name: /espandi/i })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: /riduci/i })).toHaveAttribute('aria-expanded', 'true')
   })
 
-  it('expands on toggle button click', async () => {
+  it('collapses on toggle button pointer up', async () => {
     render(
       <BottomSheet selectedFountain={null} onClose={vi.fn()}>
         <div />
       </BottomSheet>,
     )
-    const btn = screen.getByRole('button', { name: /espandi/i })
-    await userEvent.click(btn)
-    expect(btn).toHaveAttribute('aria-expanded', 'true')
+    const btn = screen.getByRole('button', { name: /riduci/i })
+    await userEvent.pointer([{ keys: '[MouseLeft>]', target: btn }, { keys: '[/MouseLeft]', target: btn }])
+    expect(btn).toHaveAttribute('aria-expanded', 'false')
   })
 })

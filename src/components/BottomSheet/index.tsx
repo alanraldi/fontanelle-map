@@ -1,69 +1,84 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { Loader2 } from 'lucide-react'
 import type { Fountain } from '@/types/fountain'
 
 const COLLAPSED_HEIGHT_PX = 64
 const EXPANDED_HEIGHT_VH = 52
+const DRAG_THRESHOLD = 40
 
 interface BottomSheetProps {
   selectedFountain: Fountain | null
   onClose: () => void
+  isLoading?: boolean
   children: ReactNode
 }
 
-export function BottomSheet({ selectedFountain, onClose, children }: BottomSheetProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const sheetRef = useRef<HTMLDivElement>(null)
-  const touchStartY = useRef<number | null>(null)
+export function BottomSheet({ selectedFountain, onClose, isLoading = false, children }: BottomSheetProps) {
+  const [isExpanded, setIsExpanded] = useState(true)
+  const pointerStartY = useRef<number | null>(null)
 
   useEffect(() => {
     if (selectedFountain) setIsExpanded(true)
   }, [selectedFountain])
 
-  const toggle = () => {
-    if (isExpanded && selectedFountain) onClose()
-    setIsExpanded((v) => !v)
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    pointerStartY.current = e.clientY
+    e.currentTarget.setPointerCapture?.(e.pointerId)
   }
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY
-  }
+  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (pointerStartY.current === null) return
+    const delta = e.clientY - pointerStartY.current
+    pointerStartY.current = null
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartY.current === null) return
-    const delta = e.changedTouches[0].clientY - touchStartY.current
-    if (delta > 40) {
+    if (delta > DRAG_THRESHOLD) {
       if (isExpanded && selectedFountain) onClose()
       setIsExpanded(false)
-    } else if (delta < -40) {
+    } else if (delta < -DRAG_THRESHOLD) {
       setIsExpanded(true)
+    } else {
+      if (isExpanded && selectedFountain) onClose()
+      setIsExpanded((v) => !v)
     }
-    touchStartY.current = null
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      if (isExpanded && selectedFountain) onClose()
+      setIsExpanded((v) => !v)
+    }
   }
 
   const height = isExpanded ? `${EXPANDED_HEIGHT_VH}vh` : `${COLLAPSED_HEIGHT_PX}px`
 
   return (
     <div
-      ref={sheetRef}
       role="region"
-      aria-label={selectedFountain ? `Dettagli fontanella` : 'Lista fontanelle'}
+      aria-label={selectedFountain ? 'Dettagli fontanella' : 'Lista fontanelle'}
       className="absolute bottom-0 left-0 right-0 z-[1000] bg-white rounded-t-2xl shadow-2xl"
       style={{
         height,
         transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
     >
       <button
-        className="w-full flex flex-col items-center justify-center py-3 touch-none"
-        onClick={toggle}
+        className="w-full flex flex-col items-center justify-center py-3 touch-none select-none cursor-pointer"
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onKeyDown={handleKeyDown}
         aria-label={isExpanded ? 'Riduci pannello' : 'Espandi pannello'}
         aria-expanded={isExpanded}
         aria-controls="bottom-sheet-content"
       >
         <div className="w-8 h-1 bg-slate-300 rounded-full" aria-hidden="true" />
+        {isLoading && (
+          <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-400" aria-live="polite">
+            <Loader2 size={11} className="animate-spin" aria-hidden="true" />
+            <span>Aggiornando...</span>
+          </div>
+        )}
       </button>
 
       <div

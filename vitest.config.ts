@@ -9,6 +9,7 @@ export default mergeConfig(
       globals: true,
       setupFiles: ['./src/test-setup.ts'],
       css: false,
+      exclude: ['tests/e2e/**', 'node_modules/**'],
     },
   }),
 )

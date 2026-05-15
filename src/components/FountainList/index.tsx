@@ -25,8 +25,8 @@ interface FountainListItemProps {
 }
 
 function FountainListItem({ fountain, onSelect }: FountainListItemProps) {
-  const { address, city, status, distance } = fountain
-  const displayName = address || 'Fontanella'
+  const { address, city, status, distance, name } = fountain
+  const displayName = name || address || 'Fontanella'
   const statusLabel = STATUS_LABELS[status]
 
   return (
@@ -90,11 +90,21 @@ export function FountainList({
   error,
   onRetry,
 }: FountainListProps) {
-  if (loadingState === 'loading') {
+  if (loadingState === 'idle') {
+    return (
+      <div className="px-4 pt-2 pb-4">
+        <p className="text-sm text-slate-500 text-center py-6">
+          Avvicina la mappa o cerca una città per vedere le fontanelle.
+        </p>
+      </div>
+    )
+  }
+
+  if (loadingState === 'loading' && fountains.length === 0) {
     return <LoadingSkeleton />
   }
 
-  if (loadingState === 'error' && error) {
+  if (loadingState === 'error' && error && fountains.length === 0) {
     return (
       <div className="px-4 pt-2 pb-4">
         <Alert variant="destructive">
@@ -110,7 +120,7 @@ export function FountainList({
     )
   }
 
-  if (loadingState === 'success' && fountains.length === 0) {
+  if ((loadingState === 'success' || loadingState === 'error') && fountains.length === 0) {
     return (
       <div className="px-4 pt-2 pb-4">
         <p className="text-sm text-slate-500 text-center py-6">

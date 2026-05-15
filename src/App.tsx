@@ -1,13 +1,16 @@
-import { lazy, Suspense, useState, useMemo, useCallback } from 'react'
+import { lazy, Suspense, useState, useMemo, useCallback, useRef } from 'react'
+import type { RefObject } from 'react'
+import type { Map as LeafletMap, LatLngBounds } from 'leaflet'
 import { GeolocationProvider } from '@/contexts/GeolocationContext'
 import { useGeolocationContext } from '@/contexts/GeolocationContext'
-import { useFountains } from '@/hooks/useFountains'
+import { useFountainsByBounds } from '@/hooks/useFountainsByBounds'
 import { useDistance } from '@/hooks/useDistance'
 import { BottomSheet } from '@/components/BottomSheet'
 import { FilterChips } from '@/components/FilterChips'
 import { FountainList } from '@/components/FountainList'
 import { FountainCard } from '@/components/FountainCard'
 import { Header } from '@/components/Header'
+import { CitySearch } from '@/components/CitySearch'
 import type { Fountain, FilterOption } from '@/types/fountain'
 
 const MapView = lazy(() =>
@@ -15,7 +18,20 @@ const MapView = lazy(() =>
 )
 
 function AppContent() {
-  const { fountains, loadingState, error, refetch } = useFountains()
+  const mapRef = useRef<LeafletMap | null>(null) as RefObject<LeafletMap | null>
+  const [mapState, setMapState] = useState<{ bounds: LatLngBounds; zoom: number } | null>(null)
+  const boundsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleBoundsChange = useCallback((bounds: LatLngBounds, zoom: number) => {
+    if (boundsDebounceRef.current) clearTimeout(boundsDebounceRef.current)
+    boundsDebounceRef.current = setTimeout(() => setMapState({ bounds, zoom }), 1000)
+  }, [])
+
+  const { fountains, loadingState, error, refetch } = useFountainsByBounds(
+    mapState?.bounds ?? null,
+    mapState?.zoom ?? 0,
+  )
+
   const { lat, lng } = useGeolocationContext()
   const sortedFountains = useDistance(fountains, lat, lng)
 
@@ -57,6 +73,8 @@ function AppContent() {
 
       <Header fountainCount={filteredFountains.length} />
 
+      <CitySearch mapRef={mapRef} />
+
       <Suspense fallback={null}>
         <MapView
           fountains={filteredFountains}
@@ -65,10 +83,12 @@ function AppContent() {
           loadingState={loadingState}
           error={error}
           onRetry={refetch}
+          onBoundsChange={handleBoundsChange}
+          mapRef={mapRef}
         />
       </Suspense>
 
-      <BottomSheet selectedFountain={selectedFountain} onClose={handleClose}>
+      <BottomSheet selectedFountain={selectedFountain} onClose={handleClose} isLoading={loadingState === 'loading'}>
         <FilterChips filter={filter} onFilterChange={setFilter} counts={counts} />
         {selectedFountain ? (
           <FountainCard fountain={selectedFountain} onClose={handleClose} />

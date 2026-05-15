@@ -2,6 +2,8 @@
 
 Mappa interattiva delle fontanelle pubbliche in Italia, costruita con React 19, Leaflet e Tailwind CSS v4.
 
+I dati provengono in tempo reale da **OpenStreetMap** tramite le API Overpass e Nominatim — nessun dataset statico.
+
 ## Stack
 
 - **React 19** + **TypeScript** (strict mode)
@@ -11,6 +13,17 @@ Mappa interattiva delle fontanelle pubbliche in Italia, costruita con React 19, 
 - **Tailwind CSS v4** — stile utility-first
 - **Lucide React** — icone
 
+## Funzionalità
+
+- **Caricamento dinamico** — le fontanelle vengono scaricate da Overpass API in base al viewport della mappa (zoom ≥ 10)
+- **Ricerca città** — cerca una città e la mappa si sposta automaticamente (Nominatim)
+- **Geolocalizzazione** — GPS con volo animato alla posizione e reverse geocoding dell'indirizzo
+- **Indicazioni** — link diretto a Google Maps (a piedi) dalla posizione corrente alla fontanella
+- **Clustering marker** — raggruppamento automatico a zoom basso
+- **Filtri per stato** — attiva / inattiva / sconosciuta
+- **BottomSheet** — pannello inferiore drag & drop con stato collapse/expand
+- **Dati OSM ricchi** — nome, operatore, descrizione estratti dai tag OSM
+
 ## Requisiti
 
 - Node.js 20+
@@ -19,34 +32,21 @@ Mappa interattiva delle fontanelle pubbliche in Italia, costruita con React 19, 
 ## Setup
 
 ```bash
-# Clone e installa dipendenze
 npm install
-
-# Copia il file di configurazione
-cp .env.example .env
-
-# Modifica .env con l'URL del dataset GeoJSON
-# VITE_GEOJSON_URL=https://...
-
-# Avvia in sviluppo
 npm run dev
 ```
 
-## Variabili d'ambiente
-
-| Variabile | Descrizione | Obbligatoria |
-|---|---|---|
-| `VITE_GEOJSON_URL` | URL del dataset GeoJSON pubblico delle fontanelle | Sì |
+Nessuna variabile d'ambiente richiesta — i dati vengono scaricati direttamente da OpenStreetMap.
 
 ## Script
 
 ```bash
-npm run dev        # Server di sviluppo
+npm run dev        # Server di sviluppo (http://localhost:5173)
 npm run build      # Build produzione
 npm run preview    # Anteprima build locale
 npm run typecheck  # Verifica TypeScript
-npm run lint       # Linting
-npm test           # Test (watch mode)
+npm run lint       # Linting ESLint
+npm test           # Test unitari (Vitest)
 ```
 
 ## Struttura
@@ -54,51 +54,56 @@ npm test           # Test (watch mode)
 ```
 src/
 ├── components/
-│   ├── ui/           # Badge, Button, Card, Skeleton, Alert
-│   ├── MapView/      # Mappa Leaflet con clustering
-│   ├── FountainMarker/  # Marker L.divIcon per fontanelle
-│   ├── UserLocationMarker/  # Marker posizione utente
-│   ├── FountainCard/ # Dettaglio fontanella selezionata
-│   ├── BottomSheet/  # Pannello inferiore con snap points
-│   ├── FilterChips/  # Filtro per stato fontanella
-│   ├── FountainList/ # Lista accessibile delle fontanelle
-│   └── Header/       # Intestazione flottante
+│   ├── ui/                   # Badge, Button, Skeleton, Alert, ScrollArea
+│   ├── MapView/              # Mappa Leaflet + BoundsTracker + MapInstanceSetter
+│   ├── FountainMarker/       # Marker L.divIcon per fontanelle
+│   ├── UserLocationMarker/   # Marker posizione utente (punto blu)
+│   ├── FountainCard/         # Dettaglio fontanella + reverse geocoding + link Maps
+│   ├── BottomSheet/          # Pannello inferiore drag & drop (pointer events)
+│   ├── FilterChips/          # Filtro per stato fontanella
+│   ├── FountainList/         # Lista accessibile delle fontanelle
+│   ├── CitySearch/           # Ricerca città con autocomplete Nominatim
+│   └── Header/               # Intestazione flottante + GPS + indirizzo utente
 ├── hooks/
-│   ├── useFountains.ts  # Fetch dati GeoJSON
-│   ├── useGeolocation.ts  # Geolocalizzazione
-│   └── useDistance.ts   # Calcolo distanze
+│   ├── useFountains.ts           # Tipi condivisi (UseFountainsResult)
+│   ├── useFountainsByBounds.ts   # Fetch Overpass API per viewport
+│   ├── useNominatim.ts           # Ricerca città (autocomplete)
+│   ├── useReverseGeocode.ts      # Indirizzo da coordinate (Nominatim)
+│   ├── useDistance.ts            # Ordinamento per distanza
+│   └── useGeolocation.ts         # (legacy, sostituito da GeolocationContext)
 ├── contexts/
-│   └── GeolocationContext.tsx
+│   └── GeolocationContext.tsx    # GPS state globale
 ├── types/
-│   ├── fountain.ts
-│   └── geojson.ts
+│   ├── fountain.ts               # Fountain, FilterOption
+│   └── overpass.ts               # OverpassElement, OverpassResponse
 ├── utils/
-│   ├── haversine.ts  # Calcolo distanza geografica
-│   ├── distance.ts   # Ordinamento e formattazione
-│   └── normalize.ts  # Normalizzazione GeoJSON
+│   ├── haversine.ts              # Calcolo distanza geografica
+│   ├── distance.ts               # Formattazione distanza
+│   ├── normalize.ts              # (legacy GeoJSON)
+│   └── normalizeOverpass.ts      # OverpassElement → Fountain
 └── lib/
-    └── leaflet.ts    # Configurazione Leaflet
+    └── leaflet.ts                # Configurazione Leaflet
 ```
 
-## Dataset GeoJSON
+## Sorgenti dati
 
-Il dataset deve essere un GeoJSON `FeatureCollection` con feature di tipo `Point`. Le proprietà supportate per la normalizzazione:
+| Servizio | Utilizzo |
+|---|---|
+| [Overpass API](https://overpass-api.de) | Fontanelle (`amenity=drinking_water`, `man_made=water_tap`) per viewport |
+| [Nominatim](https://nominatim.openstreetmap.org) | Ricerca città + reverse geocoding indirizzi |
 
-- **ID**: `id`, `fid`, `objectid`
-- **Indirizzo**: `address`, `indirizzo`, `via`, `name`
-- **Città**: `city`, `comune`
-- **Stato**: `stato_funzionamento`, `stato`, `status`, `attivo`
+Entrambi i servizi sono gratuiti e non richiedono API key. Rispettare la [usage policy di Nominatim](https://operations.osmfoundation.org/policies/nominatim/).
 
 ## Deploy
 
-Il progetto è configurato per Netlify:
+Il progetto è configurato per Netlify con deploy automatico dal branch `main`:
 
 ```bash
-npm run build
-# dist/ → deploy su Netlify
+npm run build   # build → dist/
+# push su main → Netlify deploya automaticamente
 ```
 
-Il file `netlify.toml` è già configurato con redirect SPA.
+Il file `netlify.toml` gestisce i redirect SPA.
 
 ## Accessibilità
 

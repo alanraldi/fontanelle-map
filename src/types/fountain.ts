@@ -6,6 +6,9 @@ export interface Fountain {
   city: string
   status: 'active' | 'inactive' | 'unknown'
   distance?: number
+  name?: string
+  operator?: string
+  description?: string
 }
 
 export type FountainStatus = Fountain['status']
