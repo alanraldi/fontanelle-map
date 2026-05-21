@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { formatDistance } from '@/utils/distance'
 import { useReverseGeocode } from '@/hooks/useReverseGeocode'
 import { useGeolocationContext } from '@/contexts/GeolocationContext'
+import { useFountainImage } from '@/hooks/useFountainImage'
 
 const STATUS_LABELS: Record<Fountain['status'], string> = {
   active: 'Attiva',
@@ -25,6 +26,7 @@ interface FountainCardProps {
 
 export function FountainCard({ fountain, onClose }: FountainCardProps) {
   const { address, city, status, distance, name, operator, description, lat, lng } = fountain
+  const { imageUrl, loading: imageLoading, isWikimedia } = useFountainImage(fountain)
   const hasOsmAddress = Boolean(address || city)
   const geocodedAddress = useReverseGeocode(hasOsmAddress ? null : lat, hasOsmAddress ? null : lng)
   const { lat: userLat, lng: userLng } = useGeolocationContext()
@@ -45,6 +47,28 @@ export function FountainCard({ fountain, onClose }: FountainCardProps) {
       aria-label={`Dettagli: ${ariaLabel}`}
       className="px-4 pt-2 pb-4"
     >
+      {(imageUrl || imageLoading) && (
+        <div className="-mx-4 -mt-2 mb-3">
+          {imageLoading ? (
+            <div className="w-full h-40 bg-slate-100 animate-pulse" />
+          ) : (
+            <div className="relative">
+              <img
+                src={imageUrl!}
+                alt={title}
+                className="w-full h-40 object-cover"
+                loading="lazy"
+              />
+              {isWikimedia && (
+                <span className="absolute bottom-1 right-2 text-[10px] text-white/70 drop-shadow-sm">
+                  © Wikimedia Commons
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">

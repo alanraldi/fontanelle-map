@@ -37,5 +37,7 @@ export function normalizeOverpassElement(el: OverpassElement): Fountain | null {
     name: tags.name || undefined,
     operator: tags.operator || undefined,
     description: tags.description || tags.note || undefined,
+    image: tags.image || undefined,
+    wikimediaCommons: tags.wikimedia_commons || undefined,
   }
 }

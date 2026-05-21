@@ -9,6 +9,8 @@ export interface Fountain {
   name?: string
   operator?: string
   description?: string
+  image?: string
+  wikimediaCommons?: string
 }
 
 export type FountainStatus = Fountain['status']
