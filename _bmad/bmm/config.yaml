@@ -1,0 +1,14 @@
+# BMM Module Configuration
+# Project: Fontanelle Map
+# Version: 6.6.0
+
+user_skill_level: intermediate
+project_name: Fontanelle Map
+user_name: Alanraldi
+communication_language: Portuguese
+document_output_language: Portuguese
+
+planning_artifacts: docs/bmad
+implementation_artifacts: docs/bmad
+project_knowledge: docs/bmad
+output_folder: docs/bmad
